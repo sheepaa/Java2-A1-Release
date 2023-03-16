@@ -3,6 +3,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -60,17 +61,108 @@ public class OnlineCoursesAnalyzer {
 
     //2
     public Map<String, Integer> getPtcpCountByInstAndSubject() {
-        return null;
+        Map<String, Integer> map = new TreeMap<>();
+        for (Course cour :
+                courses) {
+            String key = cour.institution + "-"+ cour.subject;
+            if(map.containsKey(key))map.put(key, map.get(key) + cour.participants);
+            else map.put(key, cour.participants);
+        }
+        // 添加键值对
+        Map<String, Integer> res = map.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+        return res;
     }
 
     //3
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
-        return null;
+        Map<String, List<List<String>>> res = new HashMap<>();
+        int count=0;
+        for (Course cour :
+                courses) {
+            String[] instructors = cour.instructors.split(", ");
+            //如果是independently responsible courses
+            if(instructors.length == 1){
+                if(res.containsKey(instructors[0])){
+                    res.get(instructors[0]).get(0).add(cour.title);
+                }else{
+                    List<List<String>> courseList = new ArrayList<>();
+                    courseList.add(new ArrayList<>());
+                    courseList.add(new ArrayList<>());
+                    courseList.get(0).add(cour.title);
+                    res.put(instructors[0],courseList);
+                }
+            }else{
+                for (String instructor :
+                        instructors) {
+                    if(res.containsKey(instructor)){
+                        res.get(instructor).get(1).add(cour.title);
+                    }else{
+                        List<List<String>> courseList = new ArrayList<>();
+                        courseList.add(new ArrayList<>());
+                        courseList.add(new ArrayList<>());
+                        courseList.get(1).add(cour.title);
+                        res.put(instructor,courseList);
+                    }
+                }
+            }
+        }
+        for (Map.Entry<String, List<List<String>>> entry : res.entrySet()) {
+            List<List<String>> list = entry.getValue();
+            List<String> list0 = list.get(0);
+            List<String> list1 = list.get(1);
+            Set<String> set0 = new LinkedHashSet<>(list0);
+            List<String> newList0 = new ArrayList<>(set0);
+            Set<String> set1 = new LinkedHashSet<>(list1);
+            List<String> newList1 = new ArrayList<>(set1);
+            Collections.sort(newList0);
+            Collections.sort(newList1);
+            List<List<String>> newList = new ArrayList<>();
+            newList.add(newList0);
+            newList.add(newList1);
+            res.put(entry.getKey(),newList);
+        }
+
+        return res;
     }
 
     //4
     public List<String> getCourses(int topK, String by) {
-        return null;
+        Map<Course, Double> map = new HashMap<>();
+        if(by.equals("hours")){
+            for (Course cour :
+                    courses) {
+                map.put(cour,cour.totalHours);
+            }
+        }
+        if(by.equals("participants")){
+            for (Course cour :
+                    courses) {
+                map.put(cour, (double)cour.participants);
+            }
+        }
+        Map<Course, Double> sortedMap = map.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        int i=0;
+        List<String> res = new ArrayList<>();
+        for(Map.Entry<Course, Double> entry:
+                sortedMap.entrySet()){
+            if(i == topK)break;
+            else{
+                if(res.contains(entry.getKey().title))continue;
+                else{
+                    res.add(entry.getKey().title);
+                    i++;
+                }
+
+            }
+
+        }
+
+        return res;
     }
 
     //5
@@ -85,13 +177,12 @@ public class OnlineCoursesAnalyzer {
 
 }
 
-//class Q2Comparator implements Comparator<Map.Entry<String, Integer>> {
-//    @Override
-//    public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
-//        if(o1.getValue() == o2.getValue())
-//        return 0;
-//    }
-//}
+class Q2Comparator implements Comparator<Map.Entry<String, Integer>> {
+    @Override
+    public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+        return o1.getValue() - o2.getValue();
+    }
+}
 class Course {
     String institution;
     String number;
