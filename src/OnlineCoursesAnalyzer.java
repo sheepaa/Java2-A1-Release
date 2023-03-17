@@ -46,9 +46,8 @@ public class OnlineCoursesAnalyzer {
         }
     }
 
-    //1
+
     public Map<String, Integer> getPtcpCountByInst() {
-//        Stream<Course> cour = courses.stream();
         Map<String, Integer> res = new TreeMap<>();
         for (Course cour :
                 courses) {
@@ -59,7 +58,7 @@ public class OnlineCoursesAnalyzer {
         return res;
     }
 
-    //2
+
     public Map<String, Integer> getPtcpCountByInstAndSubject() {
         Map<String, Integer> map = new TreeMap<>();
         for (Course cour :
@@ -68,7 +67,7 @@ public class OnlineCoursesAnalyzer {
             if(map.containsKey(key))map.put(key, map.get(key) + cour.participants);
             else map.put(key, cour.participants);
         }
-        // 添加键值对
+
         Map<String, Integer> res = map.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
@@ -76,14 +75,14 @@ public class OnlineCoursesAnalyzer {
         return res;
     }
 
-    //3
+
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
         Map<String, List<List<String>>> res = new HashMap<>();
         int count=0;
         for (Course cour :
                 courses) {
             String[] instructors = cour.instructors.split(", ");
-            //如果是independently responsible courses
+
             if(instructors.length == 1){
                 if(res.containsKey(instructors[0])){
                     res.get(instructors[0]).get(0).add(cour.title);
@@ -128,7 +127,7 @@ public class OnlineCoursesAnalyzer {
         return res;
     }
 
-    //4
+
     public List<String> getCourses(int topK, String by) {
         Map<Course, Double> map = new HashMap<>();
         if(by.equals("hours")){
@@ -165,14 +164,76 @@ public class OnlineCoursesAnalyzer {
         return res;
     }
 
-    //5
+
     public List<String> searchCourses(String courseSubject, double percentAudited, double totalCourseHours) {
-        return null;
+        List<String> res = new ArrayList<>();
+        for (Course cour :
+                courses) {
+            if (cour.subject.toLowerCase().contains(courseSubject.toLowerCase()) && cour.percentAudited >= percentAudited && cour.totalHours <= totalCourseHours)
+                res.add(cour.title);
+        }
+        Set<String> set = new HashSet<String>(res);
+        res = new ArrayList<String>(set);
+        Collections.sort(res);
+        return res;
     }
 
-    //6
+
     public List<String> recommendCourses(int age, int gender, int isBachelorOrHigher) {
-        return null;
+
+        Map<String, CourseByNumber> map = new HashMap<>();
+        for (Course cour :
+                courses) {
+           if(map.containsKey(cour.number))
+              map.get(cour.number).courses.add(cour);
+           else{
+               CourseByNumber addCourse = new CourseByNumber();
+               List<Course> add = new ArrayList<>();
+               add.add(cour);
+               addCourse.courses = add;
+               map.put(cour.number, addCourse);
+           }
+        }
+
+
+        for (Map.Entry<String, CourseByNumber> entry :
+                map.entrySet()) {
+            CourseByNumber cbn = entry.getValue();
+            Collections.sort(cbn.courses, new Comparator<Course>() {
+                @Override
+                public int compare(Course o1, Course o2) {
+                    return o1.launchDate.compareTo(o2.launchDate);
+                }
+            }.reversed());
+            cbn.averAge = cbn.courses.stream()
+                    .mapToDouble(e->e.medianAge)
+                    .average()
+                    .orElse(0.0);
+            cbn.averPerMale = cbn.courses.stream()
+                    .mapToDouble(e -> e.percentMale)
+                    .average()
+                    .orElse(0.0);
+            cbn.averBachelorOrHigher = cbn.courses.stream()
+                    .mapToDouble(e -> e.percentDegree)
+                    .average()
+                    .orElse(0.0);
+            cbn.similarityVal = Math.pow(age - cbn.averAge, 2) + Math.pow(gender * 100 - cbn.averPerMale, 2) + Math.pow(isBachelorOrHigher * 100 - cbn.averBachelorOrHigher, 2);
+        }
+
+        Map<String, CourseByNumber> sortedMap = map.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        List<String> courseTitles = new ArrayList<>();
+        int i=0;
+        for (Map.Entry<String, CourseByNumber> entry:
+        sortedMap.entrySet()){
+            if(i>=10)break;
+            if(!courseTitles.contains(entry.getValue().courses.get(0).title)){
+                courseTitles.add(entry.getValue().courses.get(0).title);
+                i++;
+            }
+        }
+        return courseTitles;
     }
 
 }
@@ -183,6 +244,40 @@ class Q2Comparator implements Comparator<Map.Entry<String, Integer>> {
         return o1.getValue() - o2.getValue();
     }
 }
+
+class CourseByNumber implements Comparable<CourseByNumber>{
+    String courseNumber;
+    List<Course> courses;
+    double averAge;
+    double averPerMale;
+    double averBachelorOrHigher;
+    double similarityVal;
+
+    @Override
+    public String toString() {
+        return "CourseByNumber{" +
+                "courseNumber='" + courseNumber + '\'' +
+                ", courses=" + courses +
+                ", averAge=" + averAge +
+                ", averPerMale=" + averPerMale +
+                ", averBachelorOrHigher=" + averBachelorOrHigher +
+                ", similarityVal=" + similarityVal +
+                '}';
+    }
+
+    @Override
+    public int compareTo(CourseByNumber o) {
+        int flag;
+        if(this.similarityVal - o.similarityVal > 0)flag = 1;
+        else if (this.similarityVal - o.similarityVal<0)flag = -1;
+        else{
+            if(this.courses.get(0).title.compareTo(o.courses.get(0).title) > 0) flag =1;
+            else flag =-1;
+        }
+        return flag;
+    }
+}
+
 class Course {
     String institution;
     String number;
@@ -207,6 +302,15 @@ class Course {
     double percentMale;
     double percentFemale;
     double percentDegree;
+
+    @Override
+    public String toString() {
+        return "Course{" +
+                "number='" + number + '\'' +
+                ", launchDate=" + launchDate +
+                ", title='" + title + '\'' +
+                '}';
+    }
 
     public Course(String institution, String number, Date launchDate,
                   String title, String instructors, String subject,
