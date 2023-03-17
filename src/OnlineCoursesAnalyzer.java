@@ -8,7 +8,8 @@ import java.util.stream.Stream;
 
 /**
  *
- * This is just a demo for you, please run it on JDK17 (some statements may be not allowed in lower version).
+ * This is just a demo for you, please run it on JDK17
+ * (some statements may be not allowed in lower version).
  * This is just a demo, and you can extend and implement functions
  * based on this demo, or implement it in a different way.
  */
@@ -24,12 +25,18 @@ public class OnlineCoursesAnalyzer {
             br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] info = line.split(",(?=([^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)", -1);
-                Course course = new Course(info[0], info[1], new Date(info[2]), info[3], info[4], info[5],
-                        Integer.parseInt(info[6]), Integer.parseInt(info[7]), Integer.parseInt(info[8]),
-                        Integer.parseInt(info[9]), Integer.parseInt(info[10]), Double.parseDouble(info[11]),
-                        Double.parseDouble(info[12]), Double.parseDouble(info[13]), Double.parseDouble(info[14]),
-                        Double.parseDouble(info[15]), Double.parseDouble(info[16]), Double.parseDouble(info[17]),
-                        Double.parseDouble(info[18]), Double.parseDouble(info[19]), Double.parseDouble(info[20]),
+                Course course = new Course(info[0], info[1],
+                        new Date(info[2]), info[3], info[4], info[5],
+                        Integer.parseInt(info[6]), Integer.parseInt(info[7]),
+                        Integer.parseInt(info[8]),
+                        Integer.parseInt(info[9]), Integer.parseInt(info[10]),
+                        Double.parseDouble(info[11]),
+                        Double.parseDouble(info[12]), Double.parseDouble(info[13]),
+                        Double.parseDouble(info[14]),
+                        Double.parseDouble(info[15]), Double.parseDouble(info[16]),
+                        Double.parseDouble(info[17]),
+                        Double.parseDouble(info[18]), Double.parseDouble(info[19]),
+                        Double.parseDouble(info[20]),
                         Double.parseDouble(info[21]), Double.parseDouble(info[22]));
                 courses.add(course);
             }
@@ -51,8 +58,11 @@ public class OnlineCoursesAnalyzer {
         Map<String, Integer> res = new TreeMap<>();
         for (Course cour :
                 courses) {
-            if(res.containsKey(cour.institution))res.put(cour.institution,res.get(cour.institution) + cour.participants);
-            else res.put(cour.institution,cour.participants);
+            if (res.containsKey(cour.institution)) {
+                res.put(cour.institution, res.get(cour.institution) + cour.participants);
+            } else {
+                res.put(cour.institution, cour.participants);
+            }
         }
 
         return res;
@@ -63,14 +73,18 @@ public class OnlineCoursesAnalyzer {
         Map<String, Integer> map = new TreeMap<>();
         for (Course cour :
                 courses) {
-            String key = cour.institution + "-"+ cour.subject;
-            if(map.containsKey(key))map.put(key, map.get(key) + cour.participants);
-            else map.put(key, cour.participants);
+            String key = cour.institution + "-" + cour.subject;
+            if (map.containsKey(key)) {
+                map.put(key, map.get(key) + cour.participants);
+            } else {
+                map.put(key, cour.participants);
+            }
         }
 
         Map<String, Integer> res = map.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
         return res;
     }
@@ -78,32 +92,32 @@ public class OnlineCoursesAnalyzer {
 
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
         Map<String, List<List<String>>> res = new HashMap<>();
-        int count=0;
+        int count = 0;
         for (Course cour :
                 courses) {
             String[] instructors = cour.instructors.split(", ");
 
-            if(instructors.length == 1){
-                if(res.containsKey(instructors[0])){
+            if (instructors.length == 1) {
+                if (res.containsKey(instructors[0])) {
                     res.get(instructors[0]).get(0).add(cour.title);
-                }else{
+                } else {
                     List<List<String>> courseList = new ArrayList<>();
                     courseList.add(new ArrayList<>());
                     courseList.add(new ArrayList<>());
                     courseList.get(0).add(cour.title);
-                    res.put(instructors[0],courseList);
+                    res.put(instructors[0], courseList);
                 }
-            }else{
+            } else {
                 for (String instructor :
                         instructors) {
-                    if(res.containsKey(instructor)){
+                    if (res.containsKey(instructor)) {
                         res.get(instructor).get(1).add(cour.title);
-                    }else{
+                    } else {
                         List<List<String>> courseList = new ArrayList<>();
                         courseList.add(new ArrayList<>());
                         courseList.add(new ArrayList<>());
                         courseList.get(1).add(cour.title);
-                        res.put(instructor,courseList);
+                        res.put(instructor, courseList);
                     }
                 }
             }
@@ -121,7 +135,7 @@ public class OnlineCoursesAnalyzer {
             List<List<String>> newList = new ArrayList<>();
             newList.add(newList0);
             newList.add(newList1);
-            res.put(entry.getKey(),newList);
+            res.put(entry.getKey(), newList);
         }
 
         return res;
@@ -130,29 +144,32 @@ public class OnlineCoursesAnalyzer {
 
     public List<String> getCourses(int topK, String by) {
         Map<Course, Double> map = new HashMap<>();
-        if(by.equals("hours")){
+        if (by.equals("hours")) {
             for (Course cour :
                     courses) {
-                map.put(cour,cour.totalHours);
+                map.put(cour, cour.totalHours);
             }
         }
-        if(by.equals("participants")){
+        if (by.equals("participants")) {
             for (Course cour :
                     courses) {
-                map.put(cour, (double)cour.participants);
+                map.put(cour, (double) cour.participants);
             }
         }
         Map<Course, Double> sortedMap = map.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-        int i=0;
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (e1, e2) -> e1, LinkedHashMap::new));
+        int i = 0;
         List<String> res = new ArrayList<>();
-        for(Map.Entry<Course, Double> entry:
-                sortedMap.entrySet()){
-            if(i == topK)break;
-            else{
-                if(res.contains(entry.getKey().title))continue;
-                else{
+        for (Map.Entry<Course, Double> entry :
+                sortedMap.entrySet()) {
+            if (i == topK) {
+                break;
+            } else {
+                if (res.contains(entry.getKey().title)) {
+                    continue;
+                } else {
                     res.add(entry.getKey().title);
                     i++;
                 }
@@ -169,8 +186,11 @@ public class OnlineCoursesAnalyzer {
         List<String> res = new ArrayList<>();
         for (Course cour :
                 courses) {
-            if (cour.subject.toLowerCase().contains(courseSubject.toLowerCase()) && cour.percentAudited >= percentAudited && cour.totalHours <= totalCourseHours)
+            if (cour.subject.toLowerCase().contains(courseSubject.toLowerCase())
+                    && cour.percentAudited >= percentAudited
+                    && cour.totalHours <= totalCourseHours) {
                 res.add(cour.title);
+            }
         }
         Set<String> set = new HashSet<String>(res);
         res = new ArrayList<String>(set);
@@ -184,9 +204,9 @@ public class OnlineCoursesAnalyzer {
         Map<String, CourseByNumber> map = new HashMap<>();
         for (Course cour :
                 courses) {
-           if(map.containsKey(cour.number))
-              map.get(cour.number).courses.add(cour);
-           else{
+           if (map.containsKey(cour.number)) {
+               map.get(cour.number).courses.add(cour);
+           } else {
                CourseByNumber addCourse = new CourseByNumber();
                List<Course> add = new ArrayList<>();
                add.add(cour);
@@ -206,7 +226,7 @@ public class OnlineCoursesAnalyzer {
                 }
             }.reversed());
             cbn.averAge = cbn.courses.stream()
-                    .mapToDouble(e->e.medianAge)
+                    .mapToDouble(e -> e.medianAge)
                     .average()
                     .orElse(0.0);
             cbn.averPerMale = cbn.courses.stream()
@@ -217,18 +237,22 @@ public class OnlineCoursesAnalyzer {
                     .mapToDouble(e -> e.percentDegree)
                     .average()
                     .orElse(0.0);
-            cbn.similarityVal = Math.pow(age - cbn.averAge, 2) + Math.pow(gender * 100 - cbn.averPerMale, 2) + Math.pow(isBachelorOrHigher * 100 - cbn.averBachelorOrHigher, 2);
+            cbn.similarityVal = Math.pow(age - cbn.averAge, 2) + Math.pow(gender * 100 - cbn.averPerMale, 2)
+                    + Math.pow(isBachelorOrHigher * 100 - cbn.averBachelorOrHigher, 2);
         }
 
         Map<String, CourseByNumber> sortedMap = map.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
         List<String> courseTitles = new ArrayList<>();
-        int i=0;
-        for (Map.Entry<String, CourseByNumber> entry:
-        sortedMap.entrySet()){
-            if(i>=10)break;
-            if(!courseTitles.contains(entry.getValue().courses.get(0).title)){
+        int i = 0;
+        for (Map.Entry<String, CourseByNumber> entry :
+        sortedMap.entrySet()) {
+            if (i>=10) {
+                break;
+            }
+            if (!courseTitles.contains(entry.getValue().courses.get(0).title)) {
                 courseTitles.add(entry.getValue().courses.get(0).title);
                 i++;
             }
@@ -245,7 +269,7 @@ class Q2Comparator implements Comparator<Map.Entry<String, Integer>> {
     }
 }
 
-class CourseByNumber implements Comparable<CourseByNumber>{
+class CourseByNumber implements Comparable<CourseByNumber> {
     String courseNumber;
     List<Course> courses;
     double averAge;
@@ -268,11 +292,16 @@ class CourseByNumber implements Comparable<CourseByNumber>{
     @Override
     public int compareTo(CourseByNumber o) {
         int flag;
-        if(this.similarityVal - o.similarityVal > 0)flag = 1;
-        else if (this.similarityVal - o.similarityVal<0)flag = -1;
-        else{
-            if(this.courses.get(0).title.compareTo(o.courses.get(0).title) > 0) flag =1;
-            else flag =-1;
+        if (this.similarityVal - o.similarityVal > 0) {
+            flag = 1;
+        } else if (this.similarityVal - o.similarityVal<0) {
+            flag = -1;
+        } else {
+            if (this.courses.get(0).title.compareTo(o.courses.get(0).title) > 0) {
+                flag = 1;
+            } else {
+                flag = -1;
+            }
         }
         return flag;
     }
@@ -324,14 +353,26 @@ class Course {
         this.institution = institution;
         this.number = number;
         this.launchDate = launchDate;
-        if (title.startsWith("\"")) title = title.substring(1);
-        if (title.endsWith("\"")) title = title.substring(0, title.length() - 1);
+        if (title.startsWith("\"")) {
+            title = title.substring(1);
+        }
+        if (title.endsWith("\"")) {
+            title = title.substring(0, title.length() - 1);
+        }
         this.title = title;
-        if (instructors.startsWith("\"")) instructors = instructors.substring(1);
-        if (instructors.endsWith("\"")) instructors = instructors.substring(0, instructors.length() - 1);
+        if (instructors.startsWith("\"")) {
+            instructors = instructors.substring(1);
+        }
+        if (instructors.endsWith("\"")) {
+            instructors = instructors.substring(0, instructors.length() - 1);
+        }
         this.instructors = instructors;
-        if (subject.startsWith("\"")) subject = subject.substring(1);
-        if (subject.endsWith("\"")) subject = subject.substring(0, subject.length() - 1);
+        if (subject.startsWith("\"")) {
+            subject = subject.substring(1);
+        }
+        if (subject.endsWith("\"")) {
+            subject = subject.substring(0, subject.length() - 1);
+        }
         this.subject = subject;
         this.year = year;
         this.honorCode = honorCode;
